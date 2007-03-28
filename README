@@ -1,0 +1,148 @@
+Problem
+=======
+
+The initial goal was simply to create a docbook reference for each
+interface - because it is standard and it is easy to convert into just
+about anything else.  After having hand coded docbook for few projects
+and finding that difficult to maintain, I looked at some alternatives.
+
+It was a specific non-goal to any docbook markup directly.
+
+Relevant Art
+==========
+
+[many probably already know this already, but for completeness]
+
+1. gtk-doc
+
+I particularly like the output and ease of use of gtk-doc.  It is
+pretty powerful because it uses a simple semantic markup and is
+contextual.  The contextual part is interesting to me for a few
+reasons:
+a) you can use the structure of project instead of duplicating the
+structure in another format
+ b) related to a. - you may be able to pull from the context content
+implicitly instead of documenting it explicitly (ie. determine the
+class name when documenting a method)
+c) documentation is in proximity to the code that it describes which
+makes it easier to maintain and view
+
+For example, with C code gtk-doc scans for things like:
+/**
+* g_markup_parse_context_new:
+ * @parser: a #GMarkupParser
+ * @flags: one or more #GMarkupParseFlags
+ * @user_data: user data to pass to #GMarkupParser functions
+* @user_data_dnotify: user data destroy notifier called when the
+parse context is freed
+*
+* Creates a new parse context. A parse context is used to parse
+* marked-up documents. You can feed any number of documents into
+* a context, as long as no errors occur; once an error occurs,
+* the parse context can't continue to parse text (you have to free it
+* and create a new parse context).
+*
+ * Return value: a new #GMarkupParseContext
+**/
+
+As you can see this uses an efficient markup that is described here:
+http://svn.gnome.org/viewcvs/gtk-doc/trunk/doc/gnome.txt?revision=349&view=markup
+
+2. C# documentation
+
+Apparently, C# has a convention for adding contextual documentation
+too.  It is described here:
+http://msdn.microsoft.com/msdnmag/issues/02/06/XMLC/
+and
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/csref/html/vclrfTagsForDocumentationComments.asp
+
+It is similar to gtk-doc in that it is contextual and is usually
+contained in source code.  However, instead of brewing its own kind of
+markup it uses XML.
+
+3. Java Doc
+
+Quite similar to gtk-doc (or perhaps I have that reversed)
+http://en.wikipedia.org/wiki/Javadoc
+
+4. Telepathy spec
+
+It extends the D-Bus introspection format to include documentation.
+It does this by adding a <tp:docstring> element that may contain
+XHTML.  It too is contextual since the docstring may be added as a
+child of any element.  There are also tags defined for providing
+copyright, etc
+
+http://telepathy.freedesktop.org/wiki/DbusSpec
+
+
+Review
+======
+
+I didn't know about the Telepathy docs initially - so it wasn't in the mix.
+
+I valued:
+ * the capabilities of the gtk-doc and javadoc systems
+ * the high semantic value of the gtk-doc, javadoc, and C# doc systems
+* the ability to extend/enrich the C# docs
+ * the ability to use XSLT etc to easily translate the C# docs
+* the language/location independence of the C# docs (can be used in
+source code or separately)
+
+I didn't like:
+ * gtk-doc and javadoc relied on a custom markup
+ * that gtk-doc and javadoc aren't useful outside of source code
+* that the XML tags used by C# docs were pretty specific to the language
+ * that with gtk-doc and javadoc you must duplicate some information that
+  can be found using the context (ie. function names etc)
+
+And I prototyped few different things.
+
+Results
+======
+
+So, there are really two separate but highly related problems.  One is
+defining a markup specification and the other is determining the
+integration point.
+
+This presumes that the two can be separated and so this became a
+design goal.  D-Bus different in this respect - all the other
+contextual documentation is to some degree language specific.
+
+- Markup
+
+The C# docs use a clearly superior markup.  However, it is somewhat C#
+language specific.  So, I tried to define a new set of elements that
+would closely match the capabilities of the various systems.
+
+In the process of actually producing docbook with it I came up with this:
+http://gitweb.freedesktop.org/?p=ConsoleKit.git;a=blob;hb=HEAD;f=doc/dbus-introspect-docs.dtd
+
+You may notice that there is one detail that makes it not orthogonal to...
+
+- Integration point
+
+The markup assumes that the integration point is capable of somehow
+providing context.
+
+I took it as a given that D-Bus already has a well defined (and
+deployed) structural markup in the Introspect format.  And that this
+is in principle the common factor between all implementations and
+bindings.
+
+So, this seems to be the most likely point for documentation
+integration.  Even if it is a trade-off because it is more separated
+from the code at least it is integrated with the "interface".  And at
+the end of the day, that may be more important and useful.
+
+That said, the C# docs show that this doesn't preclude one from using
+this same markup in source code.  And so it should still be possible
+to autogenerate from inline comments.  The only difficulty would be
+figuring out how to provide the <arg> context.
+
+In the end I came to a conclusion that was similar to the Telepathy
+spec but differed slightly due to the goal.  I wanted to create a
+docbook and thus needed to retain more semantic information.  So, I
+didn't use xhtml directly but defined a new DTD.
+
+ -- Jon McCann <mccann@jhu.edu>

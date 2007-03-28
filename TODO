@@ -1,0 +1,13 @@
+* Translation - should be possible by having a lang="" attribute on
+the <doc> element but I'm not sure this is desirable.  Perhaps using
+some kind of ...
+
+* Include mechanism - toyed with the idea of using an include
+mechanism to pull in the docs from an external file.
+
+* Does this make sense for D-Bus - maybe?  Wasn't a specific goal but
+might be useful.
+
+* Can we turn this into a mechanism for getting documentation on
+services automatically:
+  % dbus-man Hal.Manager 
